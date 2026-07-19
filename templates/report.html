@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Scanner Report - {{ scan.id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background: #fdfdfd;
+        }
+
+        /* Flexbox Layout */
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar h2 {
+            color: #38bdf8;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            margin-top: 0;
+            letter-spacing: 1px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .sidebar li {
+            margin-bottom: 12px;
+        }
+
+        .sidebar a {
+            color: #cbd5e1;
+            text-decoration: none;
+            display: block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .sidebar a:hover {
+            background: #334155;
+            color: #fff;
+        }
+
+        .sidebar .nav-header {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            margin: 25px 0 10px 0;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 300px;
+            padding: 40px;
+            max-width: 900px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #0f172a;
+        }
+
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-box {
+            background: #ffffff;
+            border-left: 4px solid #3b82f6;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        .vuln-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .severity {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        .sev-critical {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #f87171;
+        }
+
+        .sev-high {
+            background: #ffedd5;
+            color: #ea580c;
+            border: 1px solid #fb923c;
+        }
+
+        .sev-medium {
+            background: #fef9c3;
+            color: #ca8a04;
+            border: 1px solid #facc15;
+        }
+
+        .sev-low {
+            background: #e0f2fe;
+            color: #0284c7;
+            border: 1px solid #38bdf8;
+        }
+
+        .code {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            display: block;
+            margin: 15px 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        table.meta-table {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table.meta-table th {
+            width: 160px;
+            color: #64748b;
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+
+        table.meta-table td {
+            padding-bottom: 8px;
+        }
+
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9em;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+
+        /* PDF Export Overrides */
+        body.exporting {
+            background: #fff !important;
+        }
+
+        body.exporting .sidebar {
+            display: none !important;
+        }
+
+        body.exporting .main-content {
+            margin-left: 0 !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
+        }
+
+        body.exporting .vuln-card {
+            page-break-inside: avoid;
+            border-color: #ddd;
+            box-shadow: none;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                background: #fff;
+            }
+
+            .sidebar {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+                max-width: 100% !important;
+                padding: 0;
+            }
+
+            .vuln-card {
+                page-break-inside: avoid;
+                border-color: #ddd;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Jinja Pre-Processing: Group findings by explicit severity -->
+    {% set critical_vulns = [] %}
+    {% set high_vulns = [] %}
+    {% set medium_vulns = [] %}
+    {% set low_vulns = [] %}
+
+    {% for finding in findings %}
+    {% set sev = finding.severity|lower %}
+    {% if 'critical' in sev %}
+    {% set _ = critical_vulns.append(finding) %}
+    {% elif 'high' in sev %}
+    {% set _ = high_vulns.append(finding) %}
+    {% elif 'medium' in sev %}
+    {% set _ = medium_vulns.append(finding) %}
+    {% else %}
+    {% set _ = low_vulns.append(finding) %}
+    {% endif %}
+    {% endfor %}
+
+    <div class="dashboard">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <h2>Cyberhawk Report</h2>
+            <div class="nav-header">Navigation</div>
+            <ul>
+                <li><a href="#summary">Executive Summary</a></li>
+                <li><a href="#open-ports">Infrastructure / Ports</a></li>
+            </ul>
+
+            <div class="nav-header">Vulnerabilities ({{ findings|length }})</div>
+            <ul>
+                <li><a href="#vulns-critical"><span style="color: #fca5a5; display: inline-block; width: 10px;">●</span>
+                        Critical ({{ critical_vulns|length }})</a></li>
+                <li><a href="#vulns-high"><span style="color: #fdba74; display: inline-block; width: 10px;">●</span>
+                        High ({{ high_vulns|length }})</a></li>
+                <li><a href="#vulns-medium"><span style="color: #fde047; display: inline-block; width: 10px;">●</span>
+                        Medium ({{ medium_vulns|length }})</a></li>
+                <li><a href="#vulns-low"><span style="color: #7dd3fc; display: inline-block; width: 10px;">●</span> Low
+                        ({{ low_vulns|length }})</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="header">
+                <h1>Security Assessment Report</h1>
+                <p><strong>Target:</strong> {{ scan.target_url }}</p>
+                <p><strong>Scan Date:</strong> {{ scan.start_time }}</p>
+                <p><strong>Database ID:</strong> #{{ scan.id }}</p>
+            </div>
+
+            <div class="summary-box" id="summary">
+                <h2>Executive Summary</h2>
+                <p>This report documents the active findings identified during the automated security assessment via the
+                    Cyberhawk Vanguard Engine. The goal of this scan is to uncover complex application vectors including
+                    Cross-Site Scripting (XSS), SQL Injection, and robust Insecure Direct Object References, mapped
+                    concurrently alongside base infrastructure port analysis.</p>
+                <div style="display: flex; gap: 20px; margin-top: 20px; font-size: 1.1em;">
+                    <div><strong>Total Vulnerabilities:</strong> <span style="color: #0284c7;">{{ scan.total_vulns
+                            }}</span></div>
+                    <div><strong>Open Ports:</strong> <span style="color: #ca8a04;">{{ ports|length }}</span></div>
+                </div>
+
+                <!-- Google 3D Pie Chart Container -->
+                {% if findings|length > 0 %}
+                <div id="piechart_3d" style="width: 100%; height: 350px; margin-top: 10px;"></div>
+                {% endif %}
+            </div>
+
+            <h2 id="open-ports">Infrastructure Services (Port Scan)</h2>
+            {% if ports|length == 0 %}
+            <p style="color: #64748b; font-style: italic;">No open ports or services were identified during the
+                discovery phase.</p>
+            {% else %}
+            <table class="meta-table"
+                style="width: 100%; border: 1px solid #e2e8f0; margin-bottom: 40px; background: #fff;">
+                <thead>
+                    <tr style="background-color: #f8fafc;">
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">Port</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">Service</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #e2e8f0;">Banner / Version</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for port in ports %}
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a;"><strong>{{
+                                port.port }}</strong></td>
+                        <td style="padding: 12px; border-bottom: 1px solid #f1f5f9;">{{ port.service }}</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #f1f5f9;"><code>{{ port.version }}</code>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+
+            <h2 id="detailed-vulns" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 50px;">
+                Categorized Vulnerabilities</h2>
+            {% if findings|length == 0 %}
+            <p
+                style="color: #10b981; font-weight: bold; font-size: 1.1em; padding: 20px; background: #ecfdf5; border-radius: 6px; border: 1px solid #a7f3d0;">
+                Congratulations! No vulnerabilities were discovered matching our criteria during this assessment.</p>
+            {% else %}
+
+            <!-- Jinja Macro for Rendering Formatted Cards cleanly per category -->
+            {% macro render_category(vuln_list, title, id_tag, header_color) %}
+            {% if vuln_list %}
+            <h3 id="{{ id_tag }}" style="color: {{ header_color }}; margin-top: 40px; font-size: 1.5em;">{{ title }}
+                Severity Findings</h3>
+            {% for finding in vuln_list %}
+            <div class="vuln-card">
+                <h3 style="margin-top: 0; color: #1e293b;">{{ finding.vulnerability }}</h3>
+                <table class="meta-table">
+                    <tr>
+                        <th>Severity:</th>
+                        <td>
+                            {% set sev = finding.severity|lower %}
+                            <span
+                                class="severity {% if 'critical' in sev %}sev-critical{% elif 'high' in sev %}sev-high{% elif 'medium' in sev %}sev-medium{% else %}sev-low{% endif %}">
+                                {{ finding.severity }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Endpoint:</th>
+                        <td><code>{{ finding.url }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Target Parameter:</th>
+                        <td><code>{{ finding.parameter }}</code></td>
+                    </tr>
+                </table>
+
+                <h4 style="color:#475569; margin-bottom: 5px;">Description</h4>
+                <p style="margin-top:0;">{{ finding.description }}</p>
+
+                <h4 style="color:#475569; margin-bottom: 5px;">Business Impact</h4>
+                <p style="margin-top:0;">{{ finding.impact }}</p>
+
+                <h4 style="color:#475569; margin-bottom: 5px;">Attack Payload</h4>
+                <span class="code">{{ finding.payload }}</span>
+
+                <h4 style="color:#475569; margin-bottom: 5px;">Reproduction Vector</h4>
+                <p style="margin-top:0;">{{ finding.reproduction }}</p>
+
+                <h4 style="color:#475569; margin-bottom: 5px;">Remediation</h4>
+                <p style="margin-top:0;">{{ finding.remediation }}</p>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endmacro %}
+
+            <!-- Render the Categories sequentially -->
+            {{ render_category(critical_vulns, 'Critical', 'vulns-critical', '#dc2626') }}
+            {{ render_category(high_vulns, 'High', 'vulns-high', '#ea580c') }}
+            {{ render_category(medium_vulns, 'Medium', 'vulns-medium', '#ca8a04') }}
+            {{ render_category(low_vulns, 'Low', 'vulns-low', '#0284c7') }}
+            {% endif %}
+
+            <div class="footer">
+                Generated securely by Cyberhawk Vulnerability Engine. Retain confidentially.
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Charts 3D Integration -->
+    {% if findings|length > 0 %}
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load("current", { packages: ["corechart"] });
+        google.charts.setOnLoadCallback(drawChart);
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable([
+                ['Severity', 'Vulnerabilities'],
+                ['Critical', {{ critical_vulns| length }}],
+        ['High', {{ high_vulns| length }}],
+            ['Medium', {{ medium_vulns| length }}],
+            ['Low', {{ low_vulns| length }}]
+        ]);
+
+        var options = {
+            title: '', // Removed title as requested
+            is3D: true,
+            backgroundColor: 'transparent',
+            colors: ['#003049', '#D62828', '#F77F00', '#FCBF49'], // Soft pastel palette mapped from the image
+            chartArea: { left: 40, top: 40, width: '85%', height: '85%' },
+            legend: { position: 'right', textStyle: { fontSize: 14, color: '#334155' } }, // Restored Legend to the Right
+            pieSliceText: 'percentage',
+            pieSliceTextStyle: { color: 'white', fontSize: 18, bold: true },
+            slices: {
+                0: { offset: 0.05 }, // Exploded separating slices for visual volume
+                1: { offset: 0.05 },
+                2: { offset: 0.05 },
+                3: { offset: 0.05 }
+            }
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+        chart.draw(data, options);
+      }
+    </script>
+    {% endif %}
+
+    <!-- PDF Export Driver -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        window.addEventListener('load', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('download') === 'true') {
+
+                // Emulate the CSS fallback for legacy generation (hide sidebar, chart, resets margins)
+                document.body.classList.add('exporting');
+                const chartEl = document.getElementById('piechart_3d');
+                if (chartEl) chartEl.style.display = 'none';
+
+                // Provide a 500ms CSS repaint buffer before snapshot
+                setTimeout(() => {
+                    const element = document.body;
+                    const opt = {
+                        margin: 12,
+                        filename: 'Cyberhawk_Report_{{ scan.id }}.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+
+                    html2pdf().set(opt).from(element).save().then(() => {
+                        // Restore state
+                        document.body.classList.remove('exporting');
+                        if (chartEl) chartEl.style.display = 'block';
+
+                        setTimeout(() => window.close(), 1200);
+                    });
+                }, 500);
+            }
+        });
+    </script>
+</body>
+
+</html>
