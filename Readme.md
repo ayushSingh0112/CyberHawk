@@ -79,13 +79,13 @@ venv\Scripts\activate
 ### 3. Install Dependencies
 Install the required packages directly using pip:
 ```bash
-pip install Flask requests beautifulsoup4 urllib3
+pip install -r requirements.txt
 ```
 
 ### 4. Initialize Database & Start Backend
 Run `app.py` to automatically initialize the SQLite tables and boot up the Flask web server:
 ```bash
-python app.py
+python3 app.py
 ```
 By default, the server runs on localhost:
 ```text
