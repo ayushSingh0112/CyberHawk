@@ -60,8 +60,8 @@ scanner_project/
 
 ### 1. Clone & Navigate to Project Directory
 ```bash
-git clone <repository-url>
-cd scanner_project
+git clone https://github.com/ayushSingh0112/CyberHawk.git
+cd cyberhawk
 ```
 
 ### 2. Set Up Virtual Environment (Recommended)
