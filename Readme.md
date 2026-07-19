@@ -24,7 +24,7 @@ Cyberhawk Web Scanner (internally designated *Cyberhawk Security Vanguard*) is a
 ## 📁 Directory Structure
 
 ```text
-scanner_project/
+cyberhawk/
 ├── app.py                # Main Flask Backend Orchestrator & API Router
 ├── database.py           # SQLite Database Init & Data Access Layer (DAL)
 ├── database.db           # Local SQLite Database File (Created automatically)
