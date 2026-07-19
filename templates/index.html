@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberhawk Vulnerability Scanner</title>
+    <!-- Use Google Fonts for a modern UI font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <img src="/static/new_hawk.png" alt="Cyberhawk Logo" style="width: 80px; height: 80px; object-fit: contain;">
+            <h1>CYBERHAWK WEB SCANNER</h1>
+        </header>
+
+        <nav class="tabs">
+            <button class="active" data-target="home-tab">Home</button>
+            <button data-target="scans-tab">Scans</button>
+            <button data-target="reports-tab">Reports</button>
+            <button data-target="features-tab">Features</button>
+            <button data-target="logs-tab">Logs</button>
+        </nav>
+
+        <!-- HOME TAB -->
+        <div id="home-tab" class="tab-content active">
+            <section class="panel scan-control" style="flex-wrap: wrap;">
+                <div style="display: flex; flex: 1; align-items: center; position: relative; min-width: 200px;">
+                    <input type="text" id="scanName" placeholder="Scan Name (e.g., Weekly Audit)" autocomplete="off"
+                        style="width: 100%; padding-right: 60px;">
+                    <span id="assignedScanIdDisplay"
+                        style="display: none; position: absolute; right: 10px; color: var(--neon-purple); font-weight: bold; font-family: monospace; font-size: 0.9rem; pointer-events: none;"></span>
+                </div>
+                <input type="text" id="targetIp" placeholder="Target IP or Domain (e.g., 192.168.1.1)"
+                    autocomplete="off" style="flex: 1; min-width: 200px;">
+                <div
+                    style="display: flex; align-items: center; gap: 0.5rem; background: rgba(13, 9, 20, 0.8); border: 1px solid var(--border-color); padding: 0.8rem 1.2rem; border-radius: 8px;">
+                    <input type="checkbox" id="enablePortScan" style="accent-color: var(--neon-purple);">
+                    <label for="enablePortScan"
+                        style="color: var(--text-primary); font-size: 1rem; cursor: pointer;">Scan Ports</label>
+                </div>
+                <input type="text" id="targetPort" placeholder="Ports (e.g. 80,443,1-100)" value="80"
+                    style="max-width: 150px; display: none;" autocomplete="off">
+
+                <button id="startScanBtn">Start</button>
+                <button id="pauseScanBtn" class="btn-report" style="display: none;">Pause</button>
+                <button id="stopScanBtn"
+                    style="border:1px solid #ff2a85; color:#ff2a85; background:transparent; display: none;">Stop</button>
+
+                <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                    <input type="datetime-local" id="scheduleTime"
+                        style="padding: 0.4rem; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--border-color); border-radius: 4px;">
+                    <button id="scheduleScanBtn" class="btn-report">Schedule</button>
+                </div>
+            </section>
+
+            <section class="dashboard-grid" style="margin-bottom: 1.5rem;">
+                <div class="panel progress-section">
+                    <div class="progress-circle">
+                        <span class="progress-value">0%</span>
+                    </div>
+                    <div class="status-label">READY TO SCAN</div>
+                </div>
+
+                <div class="panel summary-section">
+                    <h3
+                        style="margin-bottom: 1rem; color: var(--text-secondary); text-transform: uppercase; font-size: 0.9rem;">
+                        Vulnerabilities Found</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card critical">
+                            <div class="stat-value" id="statCrit" style="color: var(--sc-critical)">0</div>
+                            <div class="stat-label">Critical</div>
+                        </div>
+                        <div class="stat-card high">
+                            <div class="stat-value" id="statHigh" style="color: var(--sc-high)">0</div>
+                            <div class="stat-label">High</div>
+                        </div>
+                        <div class="stat-card medium">
+                            <div class="stat-value" id="statMed" style="color: var(--sc-medium)">0</div>
+                            <div class="stat-label">Medium</div>
+                        </div>
+                        <div class="stat-card low">
+                            <div class="stat-value" id="statLow" style="color: var(--sc-low)">0</div>
+                            <div class="stat-label">Low</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section style="display: grid; grid-template-columns: 250px 1fr; gap: 1.5rem;">
+                <div class="panel progress-section" style="justify-content: flex-start; align-items: flex-start;">
+                    <h3
+                        style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom:1rem; text-transform:uppercase;">
+                        Live Open Ports</h3>
+                    <div id="livePortsContainer"
+                        style="color: var(--neon-purple); font-family: monospace; font-size: 0.9rem; max-height: 500px; overflow-y: auto; width: 100%;">
+                        Awaiting scan...
+                    </div>
+                </div>
+
+                <div class="panel findings-section">
+                    <h3
+                        style="margin-bottom: 1rem; color: var(--text-secondary); text-transform: uppercase; font-size: 0.9rem;">
+                        Critical Findings</h3>
+                    <table class="findings-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">Severity</th>
+                                <th>Vulnerability</th>
+                                <th>Target</th>
+                                <th>Parameter</th>
+                            </tr>
+                        </thead>
+                        <tbody id="findingsBody">
+                            <tr>
+                                <td colspan="4"
+                                    style="text-align: center; color: var(--text-secondary); padding: 2rem;">No active
+                                    findings.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div><!-- END HOME TAB -->
+
+        <!-- SCANS TAB -->
+        <div id="scans-tab" class="tab-content">
+            <section class="panel">
+                <h3
+                    style="margin-bottom: 1rem; color: var(--text-secondary); text-transform: uppercase; font-size: 0.9rem;">
+                    Scan History</h3>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <input type="text" id="scansSearch" placeholder="Search by name or ID..." style="flex: 1;">
+                    <button id="refreshScansBtn" class="btn-report">Refresh Scans</button>
+                </div>
+                <table class="findings-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Target IP</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scansBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center;">No scan history.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- REPORTS TAB -->
+        <div id="reports-tab" class="tab-content">
+            <section class="panel">
+                <h3
+                    style="margin-bottom: 1rem; color: var(--text-secondary); text-transform: uppercase; font-size: 0.9rem;">
+                    Available Reports</h3>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <input type="text" id="reportsSearch" placeholder="Search reports by name..." style="flex: 1;">
+                    <button id="refreshReportsBtn" class="btn-report">Refresh</button>
+                </div>
+                <table class="findings-table">
+                    <thead>
+                        <tr>
+                            <th>Scan ID</th>
+                            <th>Name</th>
+                            <th>Target Scope</th>
+                            <th>Vulnerabilities</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center;">No completed reports available.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- FEATURES TAB -->
+        <div id="features-tab" class="tab-content">
+            <section class="panel">
+                <h3 style="margin-bottom: 1.5rem; color: var(--text-secondary); text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px;">
+                    Supported Vulnerabilities
+                </h3>
+                
+                <div class="cap-grid">
+                    <div class="cap-card">
+                        <h4>SQL Injection (SQLi)</h4>
+                        <p>Scans endpoints and forms for database injection flaws that could allow attackers to view, modify, or delete backend data.</p>
+                        <ul>
+                            <li>Error-Based SQLi Detection</li>
+                            <li>Time-Based Blind SQLi Detection</li>
+                            <li>Tests URL parameters and form inputs</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="cap-card">
+                        <h4>Cross-Site Scripting (XSS)</h4>
+                        <p>Detects reflected XSS vulnerabilities by injecting various scripts into application inputs to see if they are unsafely rendered.</p>
+                        <ul>
+                            <li>Reflected XSS Detection</li>
+                            <li>Context-aware payload injection</li>
+                            <li>Evaluates raw HTML and attribute contexts</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="cap-card">
+                        <h4>Insecure Direct Object Reference</h4>
+                        <p>Automatically identifies ID-like parameters and attempts horizontal privilege escalation by accessing unauthenticated objects.</p>
+                        <ul>
+                            <li>Automated ID extraction</li>
+                            <li>Baseline deviation analysis</li>
+                            <li>Checks for missing authorization</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h3 style="margin-bottom: 1.5rem; color: var(--text-secondary); text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px;">
+                    Other Features
+                </h3>
+                
+                <div class="cap-grid">
+                    <div class="cap-card">
+                        <h4>Port Scanning</h4>
+                        <p>Maps out the attack surface by scanning the target host for open ports and active services.</p>
+                        <ul>
+                            <li>Custom port targeting</li>
+                            <li>Responsive port discovery</li>
+                            <li>Internal vs External service enumeration</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="cap-card">
+                        <h4>Detailed Reports</h4>
+                        <p>Generates high-fidelity PDF and HTML reports for executive overviews and developer remediation tracking.</p>
+                        <ul>
+                            <li>Professional UI branding</li>
+                            <li>Print-ready styling</li>
+                            <li>Comprehensive severity breakdown</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="cap-card">
+                        <h4>Log Export</h4>
+                        <p>Maintains runtime visibility with real-time logging and provides an easy export mechanism for compliance.</p>
+                        <ul>
+                            <li>Timestamped actionable events</li>
+                            <li>One-click .txt export</li>
+                            <li>Maintained system history</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- LOGS TAB -->
+        <div id="logs-tab" class="tab-content">
+            <section class="panel">
+                <h3
+                    style="margin-bottom: 1rem; color: var(--text-secondary); text-transform: uppercase; font-size: 0.9rem;">
+                    System Logs</h3>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <button id="refreshLogsBtn" class="btn-report">Refresh Logs</button>
+                    <button id="clearLogsBtn"
+                        style="border:1px solid #ff2a85; color:#ff2a85; background:transparent; padding:0.4rem 1rem; border-radius:4px; font-size:0.8rem; cursor:pointer;">Clear
+                        Logs</button>
+                    <a href="/api/logs/export" id="exportLogsBtn"
+                        style="border:1px solid var(--neon-purple); color:var(--neon-purple); background:transparent; padding:0.4rem 1rem; border-radius:4px; font-size:0.8rem; text-decoration:none;">Export
+                        Logs (TXT)</a>
+                </div>
+                <div class="code-block" id="logsContainer" style="max-height: 500px; overflow-y: auto;">
+                    Loading logs...
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
